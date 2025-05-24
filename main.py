@@ -400,7 +400,7 @@ class game(object):
     def set_level(self):
         if self.level == 1:
             self.bg =  pygame.transform.smoothscale(pygame.image.load('images/vecteezy_alien-planet-game-background_6316482.jpg'), (self.bg_w,self.bg_h))
-            self.screen_total_blocks = 7
+            self.screen_total_blocks = 2
             music = pygame.mixer.music.load('sounds/Three-Little-Birds.mid')
             pygame.mixer.music.play(-1)
             coinObjs = draw_coin_line(3,250,screen_height - 500,1)
@@ -465,21 +465,21 @@ class game(object):
             self.enemies.append(enemy5)
             self.enemies.append(enemy6)
             
-        if self.screen_block == 3:
-            enemy4 = enemy( 25, screen_height - 250)
-            enemy5 = enemy((screen_width * (self.screen_block + 1)) + 25, screen_height - 150)
-            enemy6 = enemy((screen_width * (self.screen_block + 1)) + 25, screen_height - 100)
-            self.enemies.append(enemy4)
-            self.enemies.append(enemy5)
-            self.enemies.append(enemy6) 
+        # if self.screen_block == 3:
+            # enemy4 = enemy( 25, screen_height - 250)
+            # enemy5 = enemy((screen_width * (self.screen_block + 1)) + 25, screen_height - 150)
+            # enemy6 = enemy((screen_width * (self.screen_block + 1)) + 25, screen_height - 100)
+            # self.enemies.append(enemy4)
+            # self.enemies.append(enemy5)
+            # self.enemies.append(enemy6) 
                 
-        if self.screen_block == 4:
-            enemy4 = enemy( 25, screen_height - 250)
-            enemy5 = enemy((screen_width * (self.screen_block + 1)) + 25, screen_height - 150)
-            enemy6 = enemy((screen_width * (self.screen_block + 1)) + 25, screen_height - 50)
-            self.enemies.append(enemy4)
-            self.enemies.append(enemy5)
-            self.enemies.append(enemy6)   
+        # if self.screen_block == 4:
+            # enemy4 = enemy( 25, screen_height - 250)
+            # enemy5 = enemy((screen_width * (self.screen_block + 1)) + 25, screen_height - 150)
+            # enemy6 = enemy((screen_width * (self.screen_block + 1)) + 25, screen_height - 50)
+            # self.enemies.append(enemy4)
+            # self.enemies.append(enemy5)
+            # self.enemies.append(enemy6)   
 
 
         
@@ -529,6 +529,9 @@ bg_x = 0
 screen_block = 1
 level_shown = 0
 last_x_rel = 0
+
+nest = pygame.image.load('images/treehouse.png')
+nest_x = screen_width
 while run:
     dt = clock.tick(15)
     for event in pygame.event.get():
@@ -559,27 +562,32 @@ while run:
                 bird.right = 0
                 bird.left = 0
                 bird.last_direction = 'right'
-    
-
-    
+ 
     #allows coins to move as background moves 
     if bird.right == 1:
         if game.screen_total_blocks >= game.screen_block:
             bg_x -= 10
             for coinObj in game.coins:
                 coinObj.x -= 10
-      
+ 
     x_rel = bg_x % game.bg_w
-    x_part2 = x_rel - game.bg_w if x_rel > 0 else x_rel + game.bg_w
-    
+    print(x_rel)
+    x_part2 = x_rel - game.bg_w if x_rel > 0 else x_rel + game.bg_w    
     if x_rel == 0 and last_x_rel != x_rel:
         game.set_enemies()  
         game.screen_block += 1
-        
+    
+ 
     win.blit(game.bg, (x_rel, 0))
     win.blit(game.bg, (x_part2, 0))
     game.display_level(win)
     
+    #draw nest if last block 
+    if (game.screen_total_blocks) <= (game.screen_block - 1):
+        win.blit(nest,(nest_x,screen_height - 512))
+        if bird.right == 1:
+            if nest_x > 450:
+                nest_x -= 10
 
     #check if coin collides with player
     for coinObj in game.coins:
@@ -593,12 +601,11 @@ while run:
     for batObj in game.bats:
         batObj.draw(win,dt)  
        
-    #enemies 
     for enemy_obj in game.enemies:
         enemy_obj.draw(win,dt)
         if enemy_obj.dead != 1:
             if enemy_obj.mask.overlap(bird.mask, offset(enemy_obj,bird)):             
-                #game.healthBar.hit = 1
+               
                 bird.health = bird.health - .40
                 if bird.health <= 0 and bird.health >= -.80:
                     tweat = pygame.mixer.Sound('sounds/tweet.mp3')
