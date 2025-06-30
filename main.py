@@ -1,12 +1,20 @@
 import pygame, sys, random
 from spritesheet import Spritesheet
 import time
-
-pygame.init()
+import tkinter as tk
+from tkinter import simpledialog
+import json
+import time
+import csv
+import pandas as pd
 #finish moving bird to class
 #https://graphicriver.net/item/flying-bugs-2d-game-chracter-sprites-148/13698892
 #enemies
 #need to make it back to the nest
+
+window = tk.Tk()
+window.withdraw()
+pygame.init()
 screen_width = 1500
 screen_height = 696
 win = pygame.display.set_mode((screen_width,screen_height))
@@ -97,8 +105,8 @@ class healthBar(object):
         win.blit(self.sprite[self.index],(self.x,self.y))
 
 class enemy(object):
-    def __init__(self,x,y,enemy_type = 1):
-        self.mask = pygame.mask
+    def __init__(self,x,y,enemy_type = 1,block_active = 0):
+        self.mask = False
         self.x = x
         self.y = y
         self.x_original = x
@@ -108,6 +116,7 @@ class enemy(object):
         self.hit = 0
         self.dead = 0
         self.attacking = 0
+        self.block_active = block_active
         
         if enemy_type == 2:
             self.speed = 10
@@ -263,6 +272,7 @@ class player(object):
         self.shooting = 0
         self.collision = 0
         self.score = 0
+        self.freeze = 0
     def __setattr__(self, name, value):
         if name == 'coins':
             super().__setattr__(name, value)
@@ -273,40 +283,41 @@ class player(object):
             super().__setattr__(name, value)
        
     def draw(self,win,dt):
-        index = 0 
-        if self.collision:
-            self.x = self.x
-            self.y = self.y
-        else: 
-            
-            if self.right or self.left:
-                self.index += 1
+        index = 0
+        if not self.freeze:
+            if self.collision:
+                self.x = self.x
+                self.y = self.y
+            else: 
                 
-            if  self.health > 0:
-                if self.right == 1:
-                   self.x = self.x + .7 * dt
-                   self.y = self.y - .2 * dt
-                   self.index = (self.index  + 1) % len(self.sprite)
-                elif self.left == 1:
-                   index = (index + 1) % len(self.sprite)
-                   self.x = self.x - .7 * dt
-                   self.y = self.y - .2 * dt
-                else:
-                   self.y = self.y + .2 * dt
-                   #index = (index + 1) % len(self.sprite)
-                
-                if self.index == len(self.sprite):
-                    self.index = 0
-                
-                if self.y > (screen_height - 200):
-                    self.y = screen_height - 200
-                elif self.y <= 0:
-                    self.y = 0
-                elif self.x < 100:
-                    self.x = 100
-                
-                if self.x >= screen_width - 500:
-                    self.x = screen_width - 500
+                if self.right or self.left:
+                    self.index += 1
+                    
+                if  self.health > 0:
+                    if self.right == 1:
+                       self.x = self.x + .7 * dt
+                       self.y = self.y - .2 * dt
+                       self.index = (self.index  + 1) % len(self.sprite)
+                    elif self.left == 1:
+                       index = (index + 1) % len(self.sprite)
+                       self.x = self.x - .7 * dt
+                       self.y = self.y - .2 * dt
+                    else:
+                       self.y = self.y + .2 * dt
+                       #index = (index + 1) % len(self.sprite)
+                    
+                    if self.index == len(self.sprite):
+                        self.index = 0
+                    
+                    if self.y > (screen_height - 200):
+                        self.y = screen_height - 200
+                    elif self.y <= 0:
+                        self.y = 0
+                    elif self.x < 100:
+                        self.x = 100
+                    
+                    if self.x >= screen_width - 500:
+                        self.x = screen_width - 500
             
             # if self.shooting:
                 # bullet()
@@ -324,17 +335,21 @@ class player(object):
             
         pygame.font.init()
         my_font = pygame.font.SysFont('Comic Sans MS', 20)
-        text_surface = my_font.render(str(self.coins), False, (66, 245, 144))
-        win.blit(text_surface, (50,50))
+        text_surface = my_font.render(str(self.coins), False, (255, 255, 255))
+        win.blit(text_surface, (60,50))
         
         add_on = int(len(str(self.score))) * 20
         my_font = pygame.font.SysFont('Comic Sans MS', 20)
-        text_surface = my_font.render('Score: '+ str(self.score), False, (66, 245, 144))
+        text_surface = my_font.render('Score: '+ str(self.score), False, (255, 255, 255))
         win.blit(text_surface, (screen_width - (75 + add_on),50))
         
         single_coin =  pygame.image.load('images/single-coin.png')
-        win.blit(single_coin,(-8,45))
-
+        win.blit(single_coin,(0,39))
+        
+    def die(self):    
+        tweat = pygame.mixer.Sound('sounds/tweet.mp3')
+        tweat.play()
+        
 class bullet(object):
     def __init__(self):
         self.bullet_img = pygame.transform.scale(pygame.image.load('images/Bullet-3.png'), (25,25)) 
@@ -342,32 +357,33 @@ class bullet(object):
         self.x = 0
         self.y = 0
         self.direction = False
-        self.mask 
+        self.dead = 0
     def draw(self,win,dt,player_x,player_y,direction):
-        if self.direction == False:
-            self.direction = direction
+        if not self.dead:
+            if self.direction == False:
+                self.direction = direction
+                
+            if self.x == 0:
+                hit_sound = pygame.mixer.Sound('sounds/shoot.mp3')
+                hit_sound.play()
+                if self.direction == 'right':
+                    self.x = player_x + 50 + 10
+                else:
+                    self.x = player_x - 50 -  10               
+                self.y = player_y + 40
+            else:
+                if self.direction == 'right':
+                    self.x = self.x + 15
+                else:
+                    self.x = self.x - 15
+            self.mask = pygame.mask.from_surface(self.bullet_img)
             
-        if self.x == 0:
-            hit_sound = pygame.mixer.Sound('sounds/shoot.mp3')
-            hit_sound.play()
-            if self.direction == 'right':
-                self.x = player_x + 50 + 10
+            if self.direction == 'left':
+                img_copy = self.bullet_img.copy() 
+                bullet_img = pygame.transform.flip(img_copy, True, False)
+                win.blit(bullet_img, (self.x,self.y))
             else:
-                self.x = player_x - 50 -  10               
-            self.y = player_y + 40
-        else:
-            if self.direction == 'right':
-                self.x = self.x + 15
-            else:
-                self.x = self.x - 15
-        self.mask = pygame.mask.from_surface(self.bullet_img)
-        
-        if self.direction == 'left':
-            img_copy = self.bullet_img.copy() 
-            bullet_img = pygame.transform.flip(img_copy, True, False)
-            win.blit(bullet_img, (self.x,self.y))
-        else:
-            win.blit(self.bullet_img, (self.x,self.y))
+                win.blit(self.bullet_img, (self.x,self.y))
         
 def draw_coin_line(total_coins = 1,start_x = 0,y = 0,horzonital = 1):
     CoinArray = [] 
@@ -383,14 +399,28 @@ def draw_coin_line(total_coins = 1,start_x = 0,y = 0,horzonital = 1):
 
 def offset(mask1, mask2):
     return int(mask2.x - mask1.x), int(mask2.y - mask1.y)
-      
+
+class scroll(object):
+    def __init__(self,x,y,txt):
+        self.x = x
+        self.y = y
+        self.txt = txt
+        
+    def draw(self,win):
+        self.y -= 1
+        my_font = pygame.font.SysFont('Comic Sans MS', 20)
+        text_surface = my_font.render(self.txt, False, (255, 255, 255))
+        center = text_surface.get_rect(center=(screen_width/2, self.y))
+        win.blit(text_surface,center)
+     
 class game(object):
     def __init__(self):
-        self.level = 1
+        self.level = 0
         self.level_shown = 0
         self.bg_w= screen_width
         self.bg_h = screen_height
         self.bg = 1 #setting to 1 as placeholder until set in set_level
+        self.total_levels = 0
         self.coins = []
         self.bats = []
         self.enemies = []
@@ -398,10 +428,14 @@ class game(object):
         self.screen_block = 0
         #self.healthBar = healthBar(screen_width - 280,35)
     def set_level(self):
+        self.screen_block = 0
+        self.level += 1 
+        self.level_shown = 0
+        
         if self.level == 1:
             self.bg =  pygame.transform.smoothscale(pygame.image.load('images/vecteezy_alien-planet-game-background_6316482.jpg'), (self.bg_w,self.bg_h))
             self.screen_total_blocks = 2
-            music = pygame.mixer.music.load('sounds/Three-Little-Birds.mid')
+            music = pygame.mixer.music.load('sounds/relaxing-guitar-loop-v12-268694.mp3')
             pygame.mixer.music.play(-1)
             coinObjs = draw_coin_line(3,250,screen_height - 500,1)
             coinObjs2 = draw_coin_line(3,125,250,1)
@@ -423,77 +457,115 @@ class game(object):
             bat5 = bat(55,screen_height)
             
             self.set_enemies()
-            
-    def set_enemies(self):
-        if self.screen_block == 0:
-            enemy1 = enemy(screen_width - 150,screen_height - 250)
-            enemy2 = enemy(screen_width + 150,screen_height - 150)
-            enemy3 = enemy(screen_width + 150,screen_height - 50)
-            enemy4 = enemy(screen_width + 75,screen_height - 300)
-            enemy5 = enemy(screen_width + 75,screen_height - 100)
-
-            enemy6 = enemy(screen_width + 300,screen_height - 300)
-            enemy7 = enemy(screen_width + 300,screen_height - 100)
-            enemy8 = enemy(screen_width + 500,screen_height - 100,2)
-            enemy9 = enemy(screen_width + 500,screen_height - 300,2)
-            enemy10 = enemy(screen_width + 500,screen_height - 400,2)
-            enemy11 = enemy(screen_width + 500,screen_height - 500)
-
-            self.enemies.append(enemy1)
-            self.enemies.append(enemy2)
-            self.enemies.append(enemy3)
-
-            self.enemies.append(enemy7)
-            self.enemies.append(enemy8)
-            self.enemies.append(enemy9)
-            self.enemies.append(enemy10)
-            self.enemies.append(enemy11)
-            
-        if self.screen_block == 1:
-            enemy4 = enemy( 25, screen_height - 250)
-            enemy5 = enemy((screen_width * self.screen_block) + 25, screen_height - 150)
-            enemy6 = enemy((screen_width * self.screen_block) + 25, screen_height - 50)
-            self.enemies.append(enemy4)
-            self.enemies.append(enemy5)
-            self.enemies.append(enemy6)
         
-        if self.screen_block == 2:
-            enemy4 = enemy( 25, screen_height - 250)
-            enemy5 = enemy((screen_width * (self.screen_block + 1)) + 25, screen_height - 150)
-            enemy6 = enemy((screen_width * (self.screen_block + 1)) + 25, screen_height - 50)
-            self.enemies.append(enemy4)
-            self.enemies.append(enemy5)
-            self.enemies.append(enemy6)
+        if self.level == 2:
+            self.bg =  pygame.transform.smoothscale(pygame.image.load('images/winterBg.png'), (self.bg_w,self.bg_h))
+            self.screen_total_blocks = 4
+            music = pygame.mixer.music.load('sounds/mystical-music-54294.mp3')
+            pygame.mixer.music.play(-1)
+            coinObjs = draw_coin_line(3,250,screen_height - 500,1)
+            coinObjs2 = draw_coin_line(3,125,250,1)
+            coinObjs3 = draw_coin_line(3,700,400,0)
+            coinObjs4 = draw_coin_line(3,750,400,0)
+            coinObjs5 = draw_coin_line(3,900,250,1)
+            coinObjs5 = draw_coin_line(9,1500,250,1)
+            coinObjs6 = draw_coin_line(5,2500,500,0)
+            self.coins = coinObjs + coinObjs2 + coinObjs3 + coinObjs4 + coinObjs5 + coinObjs6
+
+            bat1 = bat(screen_width - 32,250)
+            self.bats.append(bat1)
+            bat2 = bat(250,screen_height)
+            self.bats.append(bat2)
+            bat3 = bat(250,screen_height)
+            self.bats.append(bat3)
+            bat4 = bat(250,screen_height)
+            self.bats.append(bat4)
+            bat5 = bat(55,screen_height)
             
-        # if self.screen_block == 3:
-            # enemy4 = enemy( 25, screen_height - 250)
-            # enemy5 = enemy((screen_width * (self.screen_block + 1)) + 25, screen_height - 150)
-            # enemy6 = enemy((screen_width * (self.screen_block + 1)) + 25, screen_height - 100)
-            # self.enemies.append(enemy4)
-            # self.enemies.append(enemy5)
-            # self.enemies.append(enemy6) 
-                
-        # if self.screen_block == 4:
-            # enemy4 = enemy( 25, screen_height - 250)
-            # enemy5 = enemy((screen_width * (self.screen_block + 1)) + 25, screen_height - 150)
-            # enemy6 = enemy((screen_width * (self.screen_block + 1)) + 25, screen_height - 50)
-            # self.enemies.append(enemy4)
-            # self.enemies.append(enemy5)
-            # self.enemies.append(enemy6)   
+            self.set_enemies()
 
+        if self.level == 3:
+            self.bg =  pygame.transform.smoothscale(pygame.image.load('images/forestNight.jpg'), (self.bg_w,self.bg_h))
+            self.screen_total_blocks = 4
+            music = pygame.mixer.music.load('sounds/calming-melody-loop-291840.mp3')
+            pygame.mixer.music.play(-1)
+            coinObjs = draw_coin_line(3,250,screen_height - 500,1)
+            coinObjs2 = draw_coin_line(3,125,250,1)
+            coinObjs3 = draw_coin_line(3,700,400,0)
+            coinObjs4 = draw_coin_line(3,750,400,0)
+            coinObjs5 = draw_coin_line(3,900,250,1)
+            coinObjs5 = draw_coin_line(9,1500,250,1)
+            coinObjs6 = draw_coin_line(5,2500,500,0)
+            self.coins = coinObjs + coinObjs2 + coinObjs3 + coinObjs4 + coinObjs5 + coinObjs6
 
+            bat1 = bat(screen_width - 32,250)
+            self.bats.append(bat1)
+            bat2 = bat(250,screen_height)
+            self.bats.append(bat2)
+            bat3 = bat(250,screen_height)
+            self.bats.append(bat3)
+            bat4 = bat(250,screen_height)
+            self.bats.append(bat4)
+            bat5 = bat(55,screen_height)
+
+            self.set_enemies()                
+    def set_enemies(self):
+        #block1
+        enemy1 = enemy(screen_width - 150,screen_height - 250,1,0)
+        enemy2 = enemy(screen_width + 150,screen_height - 150,1,0)
+        enemy3 = enemy(screen_width + 150,screen_height - 50,1,0)
+        enemy4 = enemy(screen_width + 75,screen_height - 300,1,0)
+        enemy5 = enemy(screen_width + 75,screen_height - 100,1,0)
+
+        self.enemies.append(enemy1)
+        self.enemies.append(enemy2)
+        self.enemies.append(enemy3)
+        self.enemies.append(enemy4)
+        self.enemies.append(enemy5)
+        
+        #block2
+        enemy6 = enemy(screen_width + 75,screen_height - 300,2,1)
+        enemy7 = enemy(screen_width + 100,screen_height - 100,1,1)
+        enemy8 = enemy(screen_width + 125,screen_height - 100,2,1)
+        enemy9 = enemy(screen_width + 100,screen_height - 300,2,1)
+        enemy10 = enemy(screen_width + 100,screen_height - 400,2,1)
+        enemy11 = enemy(screen_width + 200,screen_height - 500,1,1)
+        
+        self.enemies.append(enemy7)
+        self.enemies.append(enemy8)
+        self.enemies.append(enemy9)
+        self.enemies.append(enemy10)
+        self.enemies.append(enemy11)
+        
+        # block3
+        enemy12 = enemy(screen_width + 75,screen_height - 300,1,2)
+        enemy13 = enemy(screen_width + 100,screen_height - 100,2,2)
+        enemy14 = enemy(screen_width + 125,screen_height - 100,1,2)
+        enemy15 = enemy(screen_width + 100,screen_height - 300,1,2)
+        enemy16 = enemy(screen_width + 100,screen_height - 400,2,2)
+        enemy17 = enemy(screen_width + 200,screen_height - 500,1,2)
+        
+        self.enemies.append(enemy12)
+        self.enemies.append(enemy13)
+        self.enemies.append(enemy14)
+        self.enemies.append(enemy15)
+        self.enemies.append(enemy16)
         
     def display_level(self,win):
         level = pygame.font.SysFont('Comic Sans MS', 30)
         level = level.render('Level '+ str(self.level), False, (0, 0, 0))
-        level =  pygame.image.load('images/level_1.png')
+        level =  pygame.image.load('images/level_' + str(self.level) +'.png')
         level_1_center = level.get_rect(center=(screen_width/2, screen_height/2))
         
         if self.level_shown == 0:
             win.blit(level,level_1_center)
-            pygame.display.update()   
+            pygame.display.update()       
+
             time.sleep(2)
             self.level_shown = 1
+            return False
+        else:
+            return True
 
 def main_menu(win,bg_w,bg_h):
     start_bg =  pygame.transform.smoothscale(pygame.image.load('images/start.png'), (bg_w, bg_h))
@@ -516,12 +588,63 @@ def main_menu(win,bg_w,bg_h):
         win.blit(start,((screen_width/2 - 100),(screen_height/2) + 200))
         pygame.display.update()
 
-game = game()   
-#main_menu(win,game.bg_w,game.bg_h)  
+def myround(x, base=5):
+    return base * round(x/base)
+    
+class nest(object):
+    def __init__(self):
+        self.nest_img =  pygame.image.load('images/treehouse.png')
+        self.mask = pygame.mask.from_surface(self.nest_img)
+        self.x = screen_width
+        self.y = 0
+        self.direction = False
+        self.mask 
+    def draw(self,win):
+        win.blit(self.nest_img,(self.x,screen_height - 512))
+            
+def on_button_click_cooldown(cooldown_seconds):
+    global _last_click_time
+    if not '_last_click_time' in globals():
+       _last_click_time = 0
+        
+    current_time = time.time()
+    if current_time - _last_click_time < cooldown_seconds:
+        return False
 
+    _last_click_time = current_time
+    return True
+    
+def highscore_save(bird):           
+    user_input = simpledialog.askstring("You win!", "Enter your name:")
+    data = [user_input,bird.coins + bird.score]
+    with open("high_scores.json", "a", newline="") as f:
+        writer = csv.writer(f)
+        writer.writerow(data)
+    
+    #reopen file and sort by highscore 
+    df = pd.read_csv('high_scores.json', header=None)
+    df_sorted = df.sort_values(by=1, ascending=False)
+    df_sorted.to_csv('high_scores.json', index=False, header=False)
+    
+def highscores_scroll():
+    scroll_y = 0
+    scrolling = []
+    scroll_total = screen_height
+    
+    with open('high_scores.json', 'r') as file:
+        reader = csv.reader(file) 
+        scrolling.append(scroll(50,scroll_total,"HIGH SCORES"))
+        scroll_total = scroll_total + 40
+        for row in reader:
+            scroll_total = scroll_total + 25
+            scrolling.append(scroll(50,scroll_total,row[0] +" - "+ row[1]))
+            
+    return scrolling
+    
+game = game()
+main_menu(win,game.bg_w,game.bg_h)  
 bird = player(0,screen_height - 250)
-
-
+finish = nest()
 shoot = False
 game.set_level()
 bullets = []
@@ -529,65 +652,121 @@ bg_x = 0
 screen_block = 1
 level_shown = 0
 last_x_rel = 0
-
-nest = pygame.image.load('images/treehouse.png')
-nest_x = screen_width
+level_shown = 0
+last_shoot = 0
+user_input = ''
+highscore_scroll = 0
+reset_shoot = 0
+high_score_set = 0
+#allows limit on 
+      
 while run:
     dt = clock.tick(15)
-    for event in pygame.event.get():
-        if event.type == pygame.QUIT:
-            run = False
-        if event.type == pygame.KEYDOWN and bird.health > 0:
-            if event.key == pygame.K_LEFT:
-                bird.right = 0
-                bird.left = 1
-                bird.last_direction = 'left'
-            if event.key == pygame.K_RIGHT:
-                bird.right = 1
-                bird.left = 0
-                bird.last_direction = 'right'
-            if event.key == pygame.K_ESCAPE:
-                main_menu(win)
-                
-            if event.key == pygame.K_SPACE:
-                bird.shooting = 1
-                shoot = bullet()
-                bullets.append(shoot)
-        if event.type == pygame.KEYUP:   
-            if event.key == pygame.K_LEFT:
-                bird.right = 0
-                bird.left = 0
-                bird.last_direction = 'left'
-            if event.key == pygame.K_RIGHT:
-                bird.right = 0
-                bird.left = 0
-                bird.last_direction = 'right'
+    if level_shown:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                run = False
+            if event.type == pygame.KEYDOWN and bird.health > 0:
+                if event.key == pygame.K_LEFT:
+                    bird.right = 0
+                    bird.left = 1
+                    bird.last_direction = 'left'
+                if event.key == pygame.K_RIGHT:
+                    bird.right = 1
+                    bird.left = 0
+                    bird.last_direction = 'right'
+                if event.key == pygame.K_ESCAPE:
+                    main_menu(win,game.bg_w,game.bg_h)
+                if event.key == pygame.K_SPACE:
+                    can_shoot = on_button_click_cooldown(1)
+                    if can_shoot:
+                        shoot = bullet()
+                        bullets.append(shoot)
+ 
+            if event.type == pygame.KEYUP:   
+                if event.key == pygame.K_LEFT:
+                    bird.right = 0
+                    bird.left = 0
+                    bird.last_direction = 'left'
+                if event.key == pygame.K_RIGHT:
+                    bird.right = 0
+                    bird.left = 0
+                    bird.last_direction = 'right'
  
     #allows coins to move as background moves 
-    if bird.right == 1:
+    if bird.right == 1 and not bird.freeze:
         if game.screen_total_blocks >= game.screen_block:
             bg_x -= 10
             for coinObj in game.coins:
                 coinObj.x -= 10
  
     x_rel = bg_x % game.bg_w
-    print(x_rel)
     x_part2 = x_rel - game.bg_w if x_rel > 0 else x_rel + game.bg_w    
     if x_rel == 0 and last_x_rel != x_rel:
-        game.set_enemies()  
+        #game.set_enemies()  
         game.screen_block += 1
     
  
     win.blit(game.bg, (x_rel, 0))
     win.blit(game.bg, (x_part2, 0))
-    game.display_level(win)
+    level_shown = game.display_level(win)
     
-    #draw nest if last block 
-    if (game.screen_total_blocks) <= (game.screen_block - 1):
-        win.blit(nest,(nest_x,screen_height - 512))
+    #draw nest if last block for level completion
+    if(game.screen_total_blocks) <= (game.screen_block - 1):
+        finish.draw(win)
+        if finish.mask.overlap(bird.mask, offset(finish,bird)):
+            if bird.freeze == 0:
+                win_sound = pygame.mixer.Sound('sounds/brass-fanfare-with-timpani-and-winchimes-reverberated-146260.mp3')
+                win_sound.play()
+                
+            bird.freeze = 1
+            pygame.font.init()
+            my_font = pygame.font.SysFont('Comic Sans MS', 30) 
+            text_surface = my_font.render('YOU WIN', False, (66, 245, 144))
+   
+            center = text_surface.get_rect(center=(screen_width/2, screen_height/2))
+            win.blit(text_surface, center)
+        
+    if bird.freeze:
+        if bird.x != 1150 and bird.y != 430:
+            bird.y = myround(bird.y)
+            if bird.y == 430:
+                bird.y = 430
+            elif bird.y >= 430:
+                bird.y -= 3
+            elif bird.y < 430:
+                bird.y += 3
+            
+            bird.x = myround(bird.x)        
+            if bird.x == 1150:
+                bird.x = 1150
+            elif bird.x >= 1150:
+                bird.x -= 3
+            elif bird.x < 1150:
+                bird.x += 3
+        else:
+            # level_shown = 0
+            #reset and change to next level
+            if game.total_levels >= game.level:
+                game.set_level()
+                game.set_enemies() 
+                 #reset bird position/unfreeze
+                bird.x = 0
+                bird.y = screen_height - 250
+                bird.freeze = 0
+            elif(high_score_set != 1):
+                highscore_save(bird)
+                high_score_set = 1
+                high_scores = highscores_scroll()   
+            elif(high_score_set):
+                for highScore in high_scores:
+                    highScore.draw(win)
+        
+                
+    if not bird.freeze:
         if bird.right == 1:
-            if nest_x > 450:
-                nest_x -= 10
+            if finish.x > (screen_width  - 450):
+                finish.x -= 10
 
     #check if coin collides with player
     for coinObj in game.coins:
@@ -600,34 +779,38 @@ while run:
     #check if bat collides with player (originally enemies but making just backgound visual)
     for batObj in game.bats:
         batObj.draw(win,dt)  
-       
+    
     for enemy_obj in game.enemies:
-        enemy_obj.draw(win,dt)
-        if enemy_obj.dead != 1:
-            if enemy_obj.mask.overlap(bird.mask, offset(enemy_obj,bird)):             
-               
-                bird.health = bird.health - .40
-                if bird.health <= 0 and bird.health >= -.80:
-                    tweat = pygame.mixer.Sound('sounds/tweet.mp3')
-                    tweat.play()
-                    
-                if bird.health < -15:
-                    enemy_obj.attacking = 0
-                else:
-                    bird.collision = 1
-                    enemy_obj.attacking = 1
-            else: 
-               enemy_obj.attacking = 0
+        if enemy_obj.block_active <= game.screen_block:
+            enemy_obj.draw(win,dt)
+            if enemy_obj.dead != 1:
+                if enemy_obj.mask.overlap(bird.mask, offset(enemy_obj,bird)):             
+                    bird.health = bird.health - .40
+                    if bird.health <= 0 and bird.health >= -.80:
+                        bird.die()     
+                        
+                    if bird.health < -15:
+                        enemy_obj.attacking = 0
+                    else:
+                        bird.collision = 1
+                        enemy_obj.attacking = 1
+                else: 
+                   enemy_obj.attacking = 0
                
     #bullet loop
     for bullet_obj in bullets:
         bullet_obj.draw(win,dt,bird.x,bird.y,bird.last_direction)
         for enemy_obj in game.enemies:
-            if enemy_obj.dead != 1 and enemy_obj.hit != 1:
+            if enemy_obj.dead != 1 and enemy_obj.hit != 1 and enemy_obj.mask != False:
                 if enemy_obj.mask.overlap(bullet_obj.mask, offset(enemy_obj,bullet_obj)):
                     enemy_obj.hit = 1
                     bird.score += 10
-                    enemy_obj.index = 0 
+                    enemy_obj.index = 0
+                    
+                    bullet_obj.dead = 1        
+                    bullet_obj.x = 0
+                    bullet_obj.y = 0        
+                    
                 
     #kill game
     if bird.health <= 0:
