@@ -198,7 +198,8 @@ class enemy(object):
         
     def draw_die(self,win,dt):
         if self.index == 0:
-            sound = pygame.mixer.Sound('sounds/died.mp3')
+            sound = pygame.mixer.Sound('sounds/enemy-die.mp3')
+            sound.set_volume(0.5)
             sound.play()
         
         if self.index < len(self.fly): 
@@ -420,7 +421,7 @@ class game(object):
         self.bg_w= screen_width
         self.bg_h = screen_height
         self.bg = 1 #setting to 1 as placeholder until set in set_level
-        self.total_levels = 0
+        self.total_levels = 2 #count starts at zero
         self.coins = []
         self.bats = []
         self.enemies = []
@@ -508,48 +509,59 @@ class game(object):
             self.bats.append(bat4)
             bat5 = bat(55,screen_height)
 
-            self.set_enemies()                
+            self.set_enemies() 
+            
     def set_enemies(self):
-        #block1
-        enemy1 = enemy(screen_width - 150,screen_height - 250,1,0)
-        enemy2 = enemy(screen_width + 150,screen_height - 150,1,0)
-        enemy3 = enemy(screen_width + 150,screen_height - 50,1,0)
-        enemy4 = enemy(screen_width + 75,screen_height - 300,1,0)
-        enemy5 = enemy(screen_width + 75,screen_height - 100,1,0)
-
-        self.enemies.append(enemy1)
-        self.enemies.append(enemy2)
-        self.enemies.append(enemy3)
-        self.enemies.append(enemy4)
-        self.enemies.append(enemy5)
-        
-        #block2
-        enemy6 = enemy(screen_width + 75,screen_height - 300,2,1)
-        enemy7 = enemy(screen_width + 100,screen_height - 100,1,1)
-        enemy8 = enemy(screen_width + 125,screen_height - 100,2,1)
-        enemy9 = enemy(screen_width + 100,screen_height - 300,2,1)
-        enemy10 = enemy(screen_width + 100,screen_height - 400,2,1)
-        enemy11 = enemy(screen_width + 200,screen_height - 500,1,1)
-        
-        self.enemies.append(enemy7)
-        self.enemies.append(enemy8)
-        self.enemies.append(enemy9)
-        self.enemies.append(enemy10)
-        self.enemies.append(enemy11)
-        
-        # block3
-        enemy12 = enemy(screen_width + 75,screen_height - 300,1,2)
-        enemy13 = enemy(screen_width + 100,screen_height - 100,2,2)
-        enemy14 = enemy(screen_width + 125,screen_height - 100,1,2)
-        enemy15 = enemy(screen_width + 100,screen_height - 300,1,2)
-        enemy16 = enemy(screen_width + 100,screen_height - 400,2,2)
-        enemy17 = enemy(screen_width + 200,screen_height - 500,1,2)
-        
-        self.enemies.append(enemy12)
-        self.enemies.append(enemy13)
-        self.enemies.append(enemy14)
-        self.enemies.append(enemy15)
-        self.enemies.append(enemy16)
+        if self.level == 1: #level 1
+            #block 0
+            enemy1 = enemy(screen_width - 150,screen_height - 250,1,0)
+            enemy2 = enemy(screen_width + 150,screen_height - 150,1,0)
+            enemy3 = enemy(screen_width + 150,screen_height - 50,1,0)
+            enemy4 = enemy(screen_width + 75,screen_height - 300,1,0)
+            enemy5 = enemy(screen_width + 75,screen_height - 100,1,0)
+            
+            enemy15 = enemy(screen_width + 25,50,2,0)
+            enemy16 = enemy(screen_width + 15,150,2,0)
+            
+            enemy17 = enemy(screen_width + 25,250,2,0)
+            enemy18 = enemy(screen_width + 15,350,2,0)            
+            self.enemies.append(enemy1)
+            self.enemies.append(enemy2)
+            self.enemies.append(enemy3)
+            self.enemies.append(enemy4)
+            self.enemies.append(enemy5)
+            self.enemies.append(enemy15)
+            self.enemies.append(enemy16)
+            self.enemies.append(enemy17)
+            self.enemies.append(enemy18)
+            
+            #block 1
+            enemy6 = enemy(screen_width + 75,screen_height - 300,2,1)
+            enemy7 = enemy(screen_width + 100,screen_height - 100,1,1)
+            enemy8 = enemy(screen_width + 125,screen_height - 100,2,1)
+            enemy9 = enemy(screen_width + 100,screen_height - 300,2,1)
+            enemy10 = enemy(screen_width + 100,screen_height - 400,2,1)
+            enemy11 = enemy(screen_width + 200,screen_height - 500,1,1)
+            
+            self.enemies.append(enemy7)
+            self.enemies.append(enemy8)
+            self.enemies.append(enemy9)
+            self.enemies.append(enemy10)
+            self.enemies.append(enemy11)
+            
+            #block 2
+            enemy12 = enemy(screen_width + 75,screen_height - 300,1,2)
+            enemy13 = enemy(screen_width + 100,screen_height - 100,2,2)
+            enemy14 = enemy(screen_width + 125,screen_height - 100,1,2)
+            enemy15 = enemy(screen_width + 100,screen_height - 300,1,2)
+            enemy16 = enemy(screen_width + 100,screen_height - 400,2,2)
+            enemy17 = enemy(screen_width + 200,screen_height - 500,1,2)
+            
+            self.enemies.append(enemy12)
+            self.enemies.append(enemy13)
+            self.enemies.append(enemy14)
+            self.enemies.append(enemy15)
+            self.enemies.append(enemy16)
         
     def display_level(self,win):
         level = pygame.font.SysFont('Comic Sans MS', 30)
@@ -566,12 +578,23 @@ class game(object):
             return False
         else:
             return True
-
-def main_menu(win,bg_w,bg_h):
+    
+    def game_over(self,win):
+        my_font = pygame.font.SysFont('Comic Sans MS', 30) 
+        text_surface = my_font.render('GAME OVER BIRDMASTER', False, (66, 245, 144))
+        center = text_surface.get_rect(center=(screen_width/2, screen_height/2))
+        win.blit(text_surface, center)
+        
+def main_menu(win,bg_w,bg_h,pause_flag = 0):
     start_bg =  pygame.transform.smoothscale(pygame.image.load('images/start.png'), (bg_w, bg_h))
     logo =  pygame.image.load('images/logo.png')
     press_select = pygame.font.SysFont('Comic Sans MS', 30)
-    start = press_select.render('Press Space', False, (0, 0, 0))
+    if pause_flag == 1:
+        start = press_select.render('Paused', False, (0, 0, 0))
+        start2 = press_select.render('Press Space', False, (0, 0, 0))
+    else:
+       start = press_select.render('Press Space', False, (0, 0, 0))
+     
     music = pygame.mixer.music.load('sounds/forest.mp3')
     pygame.mixer.music.play(-1)
     menu = True
@@ -585,7 +608,13 @@ def main_menu(win,bg_w,bg_h):
 
         win.blit(start_bg, (0, 0))
         win.blit(logo,((screen_width/2 -194),(screen_height/2)))
-        win.blit(start,((screen_width/2 - 100),(screen_height/2) + 200))
+        
+        if pause_flag == 1:
+            win.blit(start,((screen_width/2-70),(screen_height/2 + 100)))
+            win.blit(start2,((screen_width/2 - 100),(screen_height/2) + 200))
+        else:
+            win.blit(start,((screen_width/2 - 100),(screen_height/2) + 200))
+            
         pygame.display.update()
 
 def myround(x, base=5):
@@ -645,12 +674,11 @@ game = game()
 main_menu(win,game.bg_w,game.bg_h)  
 bird = player(0,screen_height - 250)
 finish = nest()
-shoot = False
 game.set_level()
 bullets = []
-bg_x = 0
 screen_block = 1
-level_shown = 0
+bg_x = 0 
+
 last_x_rel = 0
 level_shown = 0
 last_shoot = 0
@@ -658,8 +686,7 @@ user_input = ''
 highscore_scroll = 0
 reset_shoot = 0
 high_score_set = 0
-#allows limit on 
-      
+
 while run:
     dt = clock.tick(15)
     if level_shown:
@@ -676,7 +703,7 @@ while run:
                     bird.left = 0
                     bird.last_direction = 'right'
                 if event.key == pygame.K_ESCAPE:
-                    main_menu(win,game.bg_w,game.bg_h)
+                    main_menu(win,game.bg_w,game.bg_h,1)
                 if event.key == pygame.K_SPACE:
                     can_shoot = on_button_click_cooldown(1)
                     if can_shoot:
@@ -814,11 +841,8 @@ while run:
                 
     #kill game
     if bird.health <= 0:
+        game.game_over(win)
         pygame.font.init()
-        my_font = pygame.font.SysFont('Comic Sans MS', 30) 
-        text_surface = my_font.render('GAME OVER BIRDMASTER', False, (66, 245, 144))
-        center = text_surface.get_rect(center=(screen_width/2, screen_height/2))
-        win.blit(text_surface, center)
     else:
         bird.draw(win,dt)
     
