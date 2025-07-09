@@ -7,10 +7,6 @@ import json
 import time
 import csv
 import pandas as pd
-#finish moving bird to class
-#https://graphicriver.net/item/flying-bugs-2d-game-chracter-sprites-148/13698892
-#enemies
-#need to make it back to the nest
 
 window = tk.Tk()
 window.withdraw()
@@ -24,7 +20,7 @@ def redrawGameWindow():
     #win.blit(bg, (0,0))
     pygame.display.update()
  
-#main loop
+
 index = 0
 run = True
 class bat(object):
@@ -274,6 +270,7 @@ class player(object):
         self.collision = 0
         self.score = 0
         self.freeze = 0
+        self.dead = 0
     def __setattr__(self, name, value):
         if name == 'coins':
             super().__setattr__(name, value)
@@ -347,7 +344,10 @@ class player(object):
         single_coin =  pygame.image.load('images/single-coin.png')
         win.blit(single_coin,(0,39))
         
-    def die(self):    
+    def die(self):
+        self.left = 0
+        self.right = 0
+        self.dead = 1
         tweat = pygame.mixer.Sound('sounds/tweet.mp3')
         tweat.play()
         
@@ -693,35 +693,36 @@ while run:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 run = False
-            if event.type == pygame.KEYDOWN and bird.health > 0:
-                if event.key == pygame.K_LEFT:
-                    bird.right = 0
-                    bird.left = 1
-                    bird.last_direction = 'left'
-                if event.key == pygame.K_RIGHT:
-                    bird.right = 1
-                    bird.left = 0
-                    bird.last_direction = 'right'
-                if event.key == pygame.K_ESCAPE:
-                    main_menu(win,game.bg_w,game.bg_h,1)
-                if event.key == pygame.K_SPACE:
-                    can_shoot = on_button_click_cooldown(1)
-                    if can_shoot:
-                        shoot = bullet()
-                        bullets.append(shoot)
- 
-            if event.type == pygame.KEYUP:   
-                if event.key == pygame.K_LEFT:
-                    bird.right = 0
-                    bird.left = 0
-                    bird.last_direction = 'left'
-                if event.key == pygame.K_RIGHT:
-                    bird.right = 0
-                    bird.left = 0
-                    bird.last_direction = 'right'
- 
+            if not bird.dead:
+                if event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_LEFT:
+                        bird.right = 0
+                        bird.left = 1
+                        bird.last_direction = 'left'
+                    if event.key == pygame.K_RIGHT:
+                        bird.right = 1
+                        bird.left = 0
+                        bird.last_direction = 'right'
+                    if event.key == pygame.K_ESCAPE:
+                        main_menu(win,game.bg_w,game.bg_h,1)
+                    if event.key == pygame.K_SPACE:
+                        can_shoot = on_button_click_cooldown(1)
+                        if can_shoot:
+                            shoot = bullet()
+                            bullets.append(shoot)
+     
+                if event.type == pygame.KEYUP:   
+                    if event.key == pygame.K_LEFT:
+                        bird.right = 0
+                        bird.left = 0
+                        bird.last_direction = 'left'
+                    if event.key == pygame.K_RIGHT:
+                        bird.right = 0
+                        bird.left = 0
+                        bird.last_direction = 'right'
+     
     #allows coins to move as background moves 
-    if bird.right == 1 and not bird.freeze:
+    if bird.right == 1 and not bird.dead:
         if game.screen_total_blocks >= game.screen_block:
             bg_x -= 10
             for coinObj in game.coins:
@@ -812,10 +813,8 @@ while run:
             enemy_obj.draw(win,dt)
             if enemy_obj.dead != 1:
                 if enemy_obj.mask.overlap(bird.mask, offset(enemy_obj,bird)):             
-                    bird.health = bird.health - .40
-                    if bird.health <= 0 and bird.health >= -.80:
-                        bird.die()     
-                        
+                    bird.health -= 1
+                    bird.die()        
                     if bird.health < -15:
                         enemy_obj.attacking = 0
                     else:
