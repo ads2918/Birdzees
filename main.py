@@ -271,6 +271,7 @@ class player(object):
         self.score = 0
         self.freeze = 0
         self.dead = 0
+        self.dead_animation_complete = 0
     def __setattr__(self, name, value):
         if name == 'coins':
             super().__setattr__(name, value)
@@ -316,12 +317,12 @@ class player(object):
                     
                     if self.x >= screen_width - 500:
                         self.x = screen_width - 500
-            
-            # if self.shooting:
-                # bullet()
-                # bullet.draw(win,dt,self.x,self.y)
-            
-        
+
+        if self.dead:
+            self.y += 20
+            if self.y > screen_height:
+                self.dead_animation_complete = 1
+
         if self.left == 1 or self.last_direction == 'left':
             img_copy = self.sprite[self.index].copy() 
             img_with_flip = pygame.transform.flip(img_copy, True, False) 
@@ -348,6 +349,8 @@ class player(object):
         self.left = 0
         self.right = 0
         self.dead = 1
+        self.my_spritesheet = Spritesheet('images/bird-sprite-died.png')
+        self.sprite = [self.my_spritesheet.parse_sprite('bird1.png'),self.my_spritesheet.parse_sprite('bird2.png'),self.my_spritesheet.parse_sprite('bird3.png'),self.my_spritesheet.parse_sprite('bird4.png'),self.my_spritesheet.parse_sprite('bird5.png'),self.my_spritesheet.parse_sprite('bird6.png')]
         tweat = pygame.mixer.Sound('sounds/tweet.mp3')
         tweat.play()
         
@@ -538,7 +541,7 @@ class game(object):
             #block 1
             enemy6 = enemy(screen_width + 75,screen_height - 300,2,1)
             enemy7 = enemy(screen_width + 100,screen_height - 100,1,1)
-            enemy8 = enemy(screen_width + 125,screen_height - 100,2,1)
+            enemy8 = enemy(screen_width + 155,screen_height - 100,2,1)
             enemy9 = enemy(screen_width + 100,screen_height - 300,2,1)
             enemy10 = enemy(screen_width + 100,screen_height - 400,2,1)
             enemy11 = enemy(screen_width + 200,screen_height - 500,1,1)
@@ -552,7 +555,7 @@ class game(object):
             #block 2
             enemy12 = enemy(screen_width + 75,screen_height - 300,1,2)
             enemy13 = enemy(screen_width + 100,screen_height - 100,2,2)
-            enemy14 = enemy(screen_width + 125,screen_height - 100,1,2)
+            enemy14 = enemy(screen_width + 125,screen_height - 150,1,2)
             enemy15 = enemy(screen_width + 100,screen_height - 300,1,2)
             enemy16 = enemy(screen_width + 100,screen_height - 400,2,2)
             enemy17 = enemy(screen_width + 200,screen_height - 500,1,2)
@@ -813,7 +816,7 @@ while run:
             enemy_obj.draw(win,dt)
             if enemy_obj.dead != 1:
                 if enemy_obj.mask.overlap(bird.mask, offset(enemy_obj,bird)):             
-                    bird.health -= 1
+                    #bird.health -= 1
                     bird.die()        
                     if bird.health < -15:
                         enemy_obj.attacking = 0
@@ -839,7 +842,7 @@ while run:
                     
                 
     #kill game
-    if bird.health <= 0:
+    if bird.dead and bird.dead_animation_complete:
         game.game_over(win)
         pygame.font.init()
     else:
