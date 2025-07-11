@@ -431,6 +431,22 @@ class game(object):
         self.screen_total_blocks = 0
         self.screen_block = 0
         #self.healthBar = healthBar(screen_width - 280,35)
+        
+    def reset_game(self):
+        self.level = 0
+        self.level_shown = 0
+        self.bg_w= screen_width
+        self.bg_h = screen_height
+        self.bg = 1 #setting to 1 as placeholder until set in set_level
+        self.total_levels = 2 #count starts at zero
+        self.coins = []
+        self.bats = []
+        self.enemies = []
+        self.screen_total_blocks = 0
+        self.screen_block = 0
+        #self.healthBar = healthBar(screen_width - 280,35)
+        self.set_level()
+        
     def set_level(self):
         self.screen_block = 0
         self.level += 1 
@@ -565,7 +581,62 @@ class game(object):
             self.enemies.append(enemy14)
             self.enemies.append(enemy15)
             self.enemies.append(enemy16)
-        
+            
+        if self.level == 2: #level 2
+            #block 0
+
+            enemy1 = enemy(screen_width - 150,screen_height - 250,1,0)
+            enemy2 = enemy(screen_width + 150,screen_height - 150,1,0)
+            enemy3 = enemy(screen_width + 150,screen_height - 50,1,0)
+            enemy4 = enemy(screen_width + 75,screen_height - 300,1,0)
+            enemy5 = enemy(screen_width + 75,screen_height - 100,1,0)
+            enemy20 = enemy(screen_width - 25,screen_height - 250,1,0)
+            enemy21 = enemy(screen_width + 25,screen_height - 150,1,0)
+            
+            enemy15 = enemy(screen_width + 25,50,2,0)
+            enemy16 = enemy(screen_width + 15,150,2,0)
+            
+            enemy17 = enemy(screen_width + 25,250,2,0)
+            enemy18 = enemy(screen_width + 15,350,2,0)            
+            self.enemies.append(enemy1)
+            self.enemies.append(enemy2)
+            self.enemies.append(enemy3)
+            self.enemies.append(enemy4)
+            self.enemies.append(enemy5)
+            self.enemies.append(enemy15)
+            self.enemies.append(enemy16)
+            self.enemies.append(enemy17)
+            self.enemies.append(enemy18)
+            self.enemies.append(enemy20)
+            self.enemies.append(enemy21)
+            
+            #block 1
+            enemy6 = enemy(screen_width + 75,screen_height - 300,2,1)
+            enemy7 = enemy(screen_width + 100,screen_height - 100,1,1)
+            enemy8 = enemy(screen_width + 155,screen_height - 100,2,1)
+            enemy9 = enemy(screen_width + 100,screen_height - 300,2,1)
+            enemy10 = enemy(screen_width + 100,screen_height - 400,2,1)
+            enemy11 = enemy(screen_width + 200,screen_height - 500,1,1)
+            
+            self.enemies.append(enemy7)
+            self.enemies.append(enemy8)
+            self.enemies.append(enemy9)
+            self.enemies.append(enemy10)
+            self.enemies.append(enemy11)
+            
+            #block 2
+            enemy12 = enemy(screen_width + 75,screen_height - 300,1,2)
+            enemy13 = enemy(screen_width + 100,screen_height - 100,2,2)
+            enemy14 = enemy(screen_width + 125,screen_height - 150,1,2)
+            enemy15 = enemy(screen_width + 100,screen_height - 300,1,2)
+            enemy16 = enemy(screen_width + 100,screen_height - 400,2,2)
+            enemy17 = enemy(screen_width + 200,screen_height - 500,1,2)
+            
+            self.enemies.append(enemy12)
+            self.enemies.append(enemy13)
+            self.enemies.append(enemy14)
+            self.enemies.append(enemy15)
+            self.enemies.append(enemy16)    
     def display_level(self,win):
         level = pygame.font.SysFont('Comic Sans MS', 30)
         level = level.render('Level '+ str(self.level), False, (0, 0, 0))
@@ -723,6 +794,25 @@ while run:
                         bird.right = 0
                         bird.left = 0
                         bird.last_direction = 'right'
+                        
+            elif bird.dead and bird.dead_animation_complete:
+                if event.type == pygame.KEYDOWN:#resets game if player died
+                    if event.key == pygame.K_SPACE:
+                        game.reset_game()
+                        bird = player(0,screen_height - 250)
+                        finish = nest()
+                        #game.set_level()
+                        bullets = []
+                        screen_block = 1
+                        bg_x = 0 
+                
+                        last_x_rel = 0
+                        level_shown = 0
+                        last_shoot = 0
+                        user_input = ''
+                        highscore_scroll = 0
+                        reset_shoot = 0
+                        high_score_set = 0
      
     #allows coins to move as background moves 
     if bird.right == 1 and not bird.dead:
