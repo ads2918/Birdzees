@@ -15,6 +15,7 @@ screen_width = 1500
 screen_height = 696
 win = pygame.display.set_mode((screen_width,screen_height))
 pygame.display.set_caption("Birdzees")
+game_config_file = "game.json"
 clock = pygame.time.Clock()  
 def redrawGameWindow():
     #win.blit(bg, (0,0))
@@ -390,13 +391,12 @@ class bullet(object):
                 win.blit(self.bullet_img, (self.x,self.y))
         
 def draw_coin_line(total_coins = 1,start_x = 0,y = 0,horzonital = 1):
-    CoinArray = [] 
+    CoinArray = []
     for i in range(total_coins):
         if horzonital:
             start_x = start_x + 60
         else:
-            y = y - 60
-            
+            y = y - 60    
         coinObj = coin(start_x ,y)   
         CoinArray.append(coinObj)
     return CoinArray
@@ -430,7 +430,15 @@ class game(object):
         self.enemies = []
         self.screen_total_blocks = 0
         self.screen_block = 0
-        #self.healthBar = healthBar(screen_width - 280,35)
+        self.config_file = game_config_file
+        self.game_configs  = []
+        #self.healthBar = healthBar(screen_width - 280,35)    
+        
+    def get_configs(self):
+        with open(self.config_file) as f:
+           game_configs = json.load(f)
+        f.close()
+        return game_configs
         
     def reset_game(self):
         self.level = 0
@@ -451,85 +459,38 @@ class game(object):
         self.screen_block = 0
         self.level += 1 
         self.level_shown = 0
+        self.game_configs = self.get_configs()
+        total_levels = len(self.game_configs["levels"])
+        level_config = self.game_configs["levels"][str(self.level)]  
+        coin_lines = level_config["coin_lines"]
         
-        if self.level == 1:
-            self.bg =  pygame.transform.smoothscale(pygame.image.load('images/vecteezy_alien-planet-game-background_6316482.jpg'), (self.bg_w,self.bg_h))
-            self.screen_total_blocks = 2
-            music = pygame.mixer.music.load('sounds/relaxing-guitar-loop-v12-268694.mp3')
-            pygame.mixer.music.play(-1)
-            coinObjs = draw_coin_line(3,250,screen_height - 500,1)
-            coinObjs2 = draw_coin_line(3,125,250,1)
-            coinObjs3 = draw_coin_line(3,700,400,0)
-            coinObjs4 = draw_coin_line(3,750,400,0)
-            coinObjs5 = draw_coin_line(3,900,250,1)
-            coinObjs5 = draw_coin_line(9,1500,250,1)
-            coinObjs6 = draw_coin_line(5,2500,500,0)
-            self.coins = coinObjs + coinObjs2 + coinObjs3 + coinObjs4 + coinObjs5 + coinObjs6
-
-            bat1 = bat(screen_width - 32,250)
-            self.bats.append(bat1)
-            bat2 = bat(250,screen_height)
-            self.bats.append(bat2)
-            bat3 = bat(250,screen_height)
-            self.bats.append(bat3)
-            bat4 = bat(250,screen_height)
-            self.bats.append(bat4)
-            bat5 = bat(55,screen_height)
+        #sets coins from config 
+        for key in coin_lines.keys():
+            self.coins += draw_coin_line(coin_lines[key]["total_coins"],coin_lines[key]["start_x"],coin_lines[key]["y"],coin_lines[key]["horizontal"])
             
-            self.set_enemies()
+        #set level bg
+        self.bg =  pygame.transform.smoothscale(pygame.image.load(level_config["background_path"]), (self.bg_w,self.bg_h))
         
-        if self.level == 2:
-            self.bg =  pygame.transform.smoothscale(pygame.image.load('images/winterBg.png'), (self.bg_w,self.bg_h))
-            self.screen_total_blocks = 4
-            music = pygame.mixer.music.load('sounds/mystical-music-54294.mp3')
-            pygame.mixer.music.play(-1)
-            coinObjs = draw_coin_line(3,250,screen_height - 500,1)
-            coinObjs2 = draw_coin_line(3,125,250,1)
-            coinObjs3 = draw_coin_line(3,700,400,0)
-            coinObjs4 = draw_coin_line(3,750,400,0)
-            coinObjs5 = draw_coin_line(3,900,250,1)
-            coinObjs5 = draw_coin_line(9,1500,250,1)
-            coinObjs6 = draw_coin_line(5,2500,500,0)
-            self.coins = coinObjs + coinObjs2 + coinObjs3 + coinObjs4 + coinObjs5 + coinObjs6
-
-            bat1 = bat(screen_width - 32,250)
-            self.bats.append(bat1)
-            bat2 = bat(250,screen_height)
-            self.bats.append(bat2)
-            bat3 = bat(250,screen_height)
-            self.bats.append(bat3)
-            bat4 = bat(250,screen_height)
-            self.bats.append(bat4)
-            bat5 = bat(55,screen_height)
-            
-            self.set_enemies()
-
-        if self.level == 3:
-            self.bg =  pygame.transform.smoothscale(pygame.image.load('images/forestNight.jpg'), (self.bg_w,self.bg_h))
-            self.screen_total_blocks = 4
-            music = pygame.mixer.music.load('sounds/calming-melody-loop-291840.mp3')
-            pygame.mixer.music.play(-1)
-            coinObjs = draw_coin_line(3,250,screen_height - 500,1)
-            coinObjs2 = draw_coin_line(3,125,250,1)
-            coinObjs3 = draw_coin_line(3,700,400,0)
-            coinObjs4 = draw_coin_line(3,750,400,0)
-            coinObjs5 = draw_coin_line(3,900,250,1)
-            coinObjs5 = draw_coin_line(9,1500,250,1)
-            coinObjs6 = draw_coin_line(5,2500,500,0)
-            self.coins = coinObjs + coinObjs2 + coinObjs3 + coinObjs4 + coinObjs5 + coinObjs6
-
-            bat1 = bat(screen_width - 32,250)
-            self.bats.append(bat1)
-            bat2 = bat(250,screen_height)
-            self.bats.append(bat2)
-            bat3 = bat(250,screen_height)
-            self.bats.append(bat3)
-            bat4 = bat(250,screen_height)
-            self.bats.append(bat4)
-            bat5 = bat(55,screen_height)
-
-            self.set_enemies() 
-            
+        #level music
+        music = pygame.mixer.music.load(level_config["music_path"])
+        pygame.mixer.music.play(-1)
+        
+        #set block totals for iteration of background for length of level
+        self.screen_total_blocks = level_config["total_blocks"]
+        
+        bat1 = bat(screen_width - 32,250)
+        self.bats.append(bat1)
+        bat2 = bat(250,screen_height)
+        self.bats.append(bat2)
+        bat3 = bat(250,screen_height)
+        self.bats.append(bat3)
+        bat4 = bat(250,screen_height)
+        self.bats.append(bat4)
+        bat5 = bat(55,screen_height)
+        
+        #set enemies to pull from config as well
+        self.set_enemies() 
+         
     def set_enemies(self):
         if self.level == 1: #level 1
             #block 0
@@ -720,21 +681,21 @@ def on_button_click_cooldown(cooldown_seconds):
 def highscore_save(bird):           
     user_input = simpledialog.askstring("You win!", "Enter your name:")
     data = [user_input,bird.coins + bird.score]
-    with open("high_scores.json", "a", newline="") as f:
+    with open("high_scores.csv", "a", newline="") as f:
         writer = csv.writer(f)
         writer.writerow(data)
     
     #reopen file and sort by highscore 
-    df = pd.read_csv('high_scores.json', header=None)
+    df = pd.read_csv('high_scores.csv', header=None)
     df_sorted = df.sort_values(by=1, ascending=False)
-    df_sorted.to_csv('high_scores.json', index=False, header=False)
+    df_sorted.to_csv('high_scores.csv', index=False, header=False)
     
 def highscores_scroll():
     scroll_y = 0
     scrolling = []
     scroll_total = screen_height
     
-    with open('high_scores.json', 'r') as file:
+    with open('high_scores.csv', 'r') as file:
         reader = csv.reader(file) 
         scrolling.append(scroll(50,scroll_total,"HIGH SCORES"))
         scroll_total = scroll_total + 40
@@ -743,7 +704,10 @@ def highscores_scroll():
             scrolling.append(scroll(50,scroll_total,row[0] +" - "+ row[1]))
             
     return scrolling
-    
+
+
+
+        
 game = game()
 main_menu(win,game.bg_w,game.bg_h)  
 bird = player(0,screen_height - 250)
