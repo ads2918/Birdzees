@@ -114,12 +114,14 @@ class enemy(object):
         self.dead = 0
         self.attacking = 0
         self.block_active = block_active
-        
+        self.enemy_type = enemy_type
         if enemy_type == 2:
             self.speed = 10
+        elif enemy_type == 3:
+            self.speed = 15
         else:
             self.speed = 6
-            
+           
         if enemy_type == 0:
             enemy_add = ''
         else:
@@ -175,14 +177,22 @@ class enemy(object):
         if self.index >= len(self.fly):
             self.index = 0
         
-        if self.direction == 'up':
-            if self.y_original - 250 >= self.y:
-                self.y = self.y + self.speed
-                self.direction = 'down'
-            else:
-                self.y = self.y - self.speed
-                self.direction = 'up'
-        
+        if self.enemy_type != 3:
+            if self.direction == 'up':
+                if self.y_original - 250 >= self.y:
+                    self.y = self.y + self.speed
+                    self.direction = 'down'
+                else:
+                    self.y = self.y - self.speed
+                    self.direction = 'up'
+        else:
+            if self.direction == 'up':
+                if self.y_original - 350 >= self.y:
+                    self.y = self.y + self.speed
+                    self.direction = 'down'
+                else:
+                    self.y = self.y - self.speed
+                    self.direction = 'up'
         if self.direction == 'down':
             self.y = self.y + self.speed
             if self.y >= self.y_original:
@@ -492,112 +502,13 @@ class game(object):
         self.set_enemies() 
          
     def set_enemies(self):
-        if self.level == 1: #level 1
-            #block 0
-            enemy1 = enemy(screen_width - 150,screen_height - 250,1,0)
-            enemy2 = enemy(screen_width + 150,screen_height - 150,1,0)
-            enemy3 = enemy(screen_width + 150,screen_height - 50,1,0)
-            enemy4 = enemy(screen_width + 75,screen_height - 300,1,0)
-            enemy5 = enemy(screen_width + 75,screen_height - 100,1,0)
-            
-            enemy15 = enemy(screen_width + 25,50,2,0)
-            enemy16 = enemy(screen_width + 15,150,2,0)
-            
-            enemy17 = enemy(screen_width + 25,250,2,0)
-            enemy18 = enemy(screen_width + 15,350,2,0)            
-            self.enemies.append(enemy1)
-            self.enemies.append(enemy2)
-            self.enemies.append(enemy3)
-            self.enemies.append(enemy4)
-            self.enemies.append(enemy5)
-            self.enemies.append(enemy15)
-            self.enemies.append(enemy16)
-            self.enemies.append(enemy17)
-            self.enemies.append(enemy18)
-            
-            #block 1
-            enemy6 = enemy(screen_width + 75,screen_height - 300,2,1)
-            enemy7 = enemy(screen_width + 100,screen_height - 100,1,1)
-            enemy8 = enemy(screen_width + 155,screen_height - 100,2,1)
-            enemy9 = enemy(screen_width + 100,screen_height - 300,2,1)
-            enemy10 = enemy(screen_width + 100,screen_height - 400,2,1)
-            enemy11 = enemy(screen_width + 200,screen_height - 500,1,1)
-            
-            self.enemies.append(enemy7)
-            self.enemies.append(enemy8)
-            self.enemies.append(enemy9)
-            self.enemies.append(enemy10)
-            self.enemies.append(enemy11)
-            
-            #block 2
-            enemy12 = enemy(screen_width + 75,screen_height - 300,1,2)
-            enemy13 = enemy(screen_width + 100,screen_height - 100,2,2)
-            enemy14 = enemy(screen_width + 125,screen_height - 150,1,2)
-            enemy15 = enemy(screen_width + 100,screen_height - 300,1,2)
-            enemy16 = enemy(screen_width + 100,screen_height - 400,2,2)
-            enemy17 = enemy(screen_width + 200,screen_height - 500,1,2)
-            
-            self.enemies.append(enemy12)
-            self.enemies.append(enemy13)
-            self.enemies.append(enemy14)
-            self.enemies.append(enemy15)
-            self.enemies.append(enemy16)
-            
-        if self.level == 2: #level 2
-            #block 0
-
-            enemy1 = enemy(screen_width - 150,screen_height - 250,1,0)
-            enemy2 = enemy(screen_width + 150,screen_height - 150,1,0)
-            enemy3 = enemy(screen_width + 150,screen_height - 50,1,0)
-            enemy4 = enemy(screen_width + 75,screen_height - 300,1,0)
-            enemy5 = enemy(screen_width + 75,screen_height - 100,1,0)
-            enemy20 = enemy(screen_width - 25,screen_height - 250,1,0)
-            enemy21 = enemy(screen_width + 25,screen_height - 150,1,0)
-            
-            enemy15 = enemy(screen_width + 25,50,2,0)
-            enemy16 = enemy(screen_width + 15,150,2,0)
-            
-            enemy17 = enemy(screen_width + 25,250,2,0)
-            enemy18 = enemy(screen_width + 15,350,2,0)            
-            self.enemies.append(enemy1)
-            self.enemies.append(enemy2)
-            self.enemies.append(enemy3)
-            self.enemies.append(enemy4)
-            self.enemies.append(enemy5)
-            self.enemies.append(enemy15)
-            self.enemies.append(enemy16)
-            self.enemies.append(enemy17)
-            self.enemies.append(enemy18)
-            self.enemies.append(enemy20)
-            self.enemies.append(enemy21)
-            
-            #block 1
-            enemy6 = enemy(screen_width + 75,screen_height - 300,2,1)
-            enemy7 = enemy(screen_width + 100,screen_height - 100,1,1)
-            enemy8 = enemy(screen_width + 155,screen_height - 100,2,1)
-            enemy9 = enemy(screen_width + 100,screen_height - 300,2,1)
-            enemy10 = enemy(screen_width + 100,screen_height - 400,2,1)
-            enemy11 = enemy(screen_width + 200,screen_height - 500,1,1)
-            
-            self.enemies.append(enemy7)
-            self.enemies.append(enemy8)
-            self.enemies.append(enemy9)
-            self.enemies.append(enemy10)
-            self.enemies.append(enemy11)
-            
-            #block 2
-            enemy12 = enemy(screen_width + 75,screen_height - 300,1,2)
-            enemy13 = enemy(screen_width + 100,screen_height - 100,2,2)
-            enemy14 = enemy(screen_width + 125,screen_height - 150,1,2)
-            enemy15 = enemy(screen_width + 100,screen_height - 300,1,2)
-            enemy16 = enemy(screen_width + 100,screen_height - 400,2,2)
-            enemy17 = enemy(screen_width + 200,screen_height - 500,1,2)
-            
-            self.enemies.append(enemy12)
-            self.enemies.append(enemy13)
-            self.enemies.append(enemy14)
-            self.enemies.append(enemy15)
-            self.enemies.append(enemy16)    
+        self.enemies = []
+        total_levels = len(self.game_configs["levels"])
+        level_config = self.game_configs["levels"][str(self.level)]  
+        enemy_lines = level_config["enemies"]
+        for key in enemy_lines.keys():
+            self.enemies.append(enemy(enemy_lines[key]["x"],enemy_lines[key]["y"],enemy_lines[key]["enemy_type"],enemy_lines[key]["block_active"]))
+ 
     def display_level(self,win):
         level = pygame.font.SysFont('Comic Sans MS', 30)
         level = level.render('Level '+ str(self.level), False, (0, 0, 0))
@@ -619,6 +530,10 @@ class game(object):
         text_surface = my_font.render('GAME OVER BIRDMASTER', False, (66, 245, 144))
         center = text_surface.get_rect(center=(screen_width/2, screen_height/2))
         win.blit(text_surface, center)
+
+        text_surface2 = my_font.render('Press Space to Retry', False, (66, 245, 144))
+        center = text_surface2.get_rect(center=(screen_width/2, (screen_height/2) + 100))
+        win.blit(text_surface2, center)
         
 def main_menu(win,bg_w,bg_h,pause_flag = 0):
     start_bg =  pygame.transform.smoothscale(pygame.image.load('images/start.png'), (bg_w, bg_h))
