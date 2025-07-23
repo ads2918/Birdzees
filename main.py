@@ -193,6 +193,7 @@ class enemy(object):
                 else:
                     self.y = self.y - self.speed
                     self.direction = 'up'
+                    
         if self.direction == 'down':
             self.y = self.y + self.speed
             if self.y >= self.y_original:
@@ -659,10 +660,10 @@ while run:
                     if event.key == pygame.K_ESCAPE:
                         main_menu(win,game.bg_w,game.bg_h,1)
                     if event.key == pygame.K_SPACE:
-                        can_shoot = on_button_click_cooldown(1)
-                        if can_shoot:
-                            shoot = bullet()
-                            bullets.append(shoot)
+                        #can_shoot = on_button_click_cooldown(.5)
+                        #if can_shoot:
+                        shoot = bullet()
+                        bullets.append(shoot)
      
                 if event.type == pygame.KEYUP:   
                     if event.key == pygame.K_LEFT:
