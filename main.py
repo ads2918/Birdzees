@@ -100,9 +100,10 @@ class healthBar(object):
             self.index = 0
         self.mask = pygame.mask.from_surface(self.sprite[self.index])
         win.blit(self.sprite[self.index],(self.x,self.y))
+ 
 
 class enemy(object):
-    def __init__(self,x,y,enemy_type = 1,block_active = 0):
+    def __init__(self,x,y,enemy_type = 1,block_active = 0,boss = 0):
         self.mask = False
         self.x = x
         self.y = y
@@ -113,6 +114,9 @@ class enemy(object):
         self.hit = 0
         self.dead = 0
         self.attacking = 0
+        self.boss = boss
+        self.hit_count = 0
+        self.boss_dir = 'left'
         self.block_active = block_active
         self.enemy_type = enemy_type
         if enemy_type == 2:
@@ -165,18 +169,39 @@ class enemy(object):
     
     def draw(self,win,dt):
         if self.hit:
-            self.draw_die(win,dt)
+            self.hit_count  += 1
+            self.speed += .3
+            if (self.hit_count >= 30 and self.boss) or not self.boss:
+                self.draw_die(win,dt)
+            elif self.attacking:
+                self.draw_attack(win,dt)
+            else:
+                self.hit = 0
+                self.draw_fly(win,dt)
+       
         elif self.attacking:
             self.draw_attack(win,dt)
         else:
             self.draw_fly(win,dt)
        
     def draw_fly(self,win,dt): 
-        self.x = self.x - self.speed
         
+        if self.boss:
+            if self.x <= 0:
+               self.x = self.x + self.speed
+               self.boss_dir = 'right'
+            elif self.x >= screen_width - 250 :
+               self.x = self.x - self.speed
+               self.boss_dir = 'left'
+            elif self.boss_dir == 'left':
+              self.x = self.x - self.speed
+            elif self.boss_dir == 'right':
+              self.x = self.x + self.speed
+        else:
+            self.x = self.x - self.speed
         if self.index >= len(self.fly):
             self.index = 0
-        
+
         if self.enemy_type != 3:
             if self.direction == 'up':
                 if self.y_original - 250 >= self.y:
@@ -198,20 +223,41 @@ class enemy(object):
             self.y = self.y + self.speed
             if self.y >= self.y_original:
                 self.direction = 'up'
+        
+        if self.boss:
+            x_scale = 300
+            y_scale = 300
+        else:
+            x_scale = 100
+            y_scale = 100
+        
+        if self.boss and self.boss_dir == 'right':
+            img_copy = self.fly[self.index].copy() 
+            image = pygame.transform.flip(img_copy, True, False) 
+            image = pygame.transform.scale(image, (x_scale,y_scale))
+        else:  
+            image = pygame.transform.scale(self.fly[self.index], (x_scale,y_scale))
             
-        image = pygame.transform.scale(self.fly[self.index], (100,100))
         self.mask = pygame.mask.from_surface(image)  
         win.blit(image, (self.x,self.y))
         self.index += 1
         
     def draw_die(self,win,dt):
+
         if self.index == 0:
             sound = pygame.mixer.Sound('sounds/enemy-die.mp3')
             sound.set_volume(0.5)
             sound.play()
         
+        if self.boss:
+            x_scale = 300
+            y_scale = 300
+        else:
+            x_scale = 100
+            y_scale = 100
+            
         if self.index < len(self.fly): 
-            image = pygame.transform.scale(self.die[self.index], (100,100))
+            image = pygame.transform.scale(self.die[self.index], (x_scale,y_scale))
             self.mask = pygame.mask.from_surface(image)  
             win.blit(image, (self.x,self.y))
         else:
@@ -224,8 +270,15 @@ class enemy(object):
            #coin_sound = pygame.mixer.Sound('sounds/died.mp3')
            #coin_sound.play()
         
+        if self.boss:
+            x_scale = 300
+            y_scale = 300
+        else:
+            x_scale = 100
+            y_scale = 100
+            
         if self.index < len(self.attack): 
-            image = pygame.transform.scale(self.attack[self.index], (100,100))
+            image = pygame.transform.scale(self.attack[self.index], (x_scale,y_scale))
             self.mask = pygame.mask.from_surface(image)  
             win.blit(image, (self.x - 5,self.y))
         else:
@@ -507,8 +560,12 @@ class game(object):
         total_levels = len(self.game_configs["levels"])
         level_config = self.game_configs["levels"][str(self.level)]  
         enemy_lines = level_config["enemies"]
-        for key in enemy_lines.keys():
-            self.enemies.append(enemy(enemy_lines[key]["x"],enemy_lines[key]["y"],enemy_lines[key]["enemy_type"],enemy_lines[key]["block_active"]))
+        boss_lines = level_config["boss"]
+        #for key in enemy_lines.keys():
+            #self.enemies.append(enemy(enemy_lines[key]["x"],enemy_lines[key]["y"],enemy_lines[key]["enemy_type"],enemy_lines[key]["block_active"]))
+            
+        for key in boss_lines.keys():
+            self.enemies.append(enemy(enemy_lines[key]["x"],enemy_lines[key]["y"],enemy_lines[key]["enemy_type"],enemy_lines[key]["block_active"],1))    
  
     def display_level(self,win):
         level = pygame.font.SysFont('Comic Sans MS', 30)
@@ -640,7 +697,7 @@ user_input = ''
 highscore_scroll = 0
 reset_shoot = 0
 high_score_set = 0
-
+scroll_stop = False
 while run:
     dt = clock.tick(15)
     if level_shown:
@@ -673,9 +730,8 @@ while run:
                     if event.key == pygame.K_RIGHT:
                         bird.right = 0
                         bird.left = 0
-                        bird.last_direction = 'right'
-                        
-            elif bird.dead and bird.dead_animation_complete:
+                        bird.last_direction = 'right' 
+            elif bird.dead and bird.dead_animation_complete and scroll_stop == False:
                 if event.type == pygame.KEYDOWN:#resets game if player died
                     if event.key == pygame.K_SPACE:
                         game.reset_game()
@@ -695,11 +751,12 @@ while run:
                         high_score_set = 0
      
     #allows coins to move as background moves 
-    if bird.right == 1 and not bird.dead:
-        if game.screen_total_blocks >= game.screen_block:
-            bg_x -= 10
-            for coinObj in game.coins:
-                coinObj.x -= 10
+    if scroll_stop != True:       
+        if bird.right == 1 and not bird.dead:
+            if game.screen_total_blocks >= game.screen_block:
+                bg_x -= 10
+                for coinObj in game.coins:
+                    coinObj.x -= 10
  
     x_rel = bg_x % game.bg_w
     x_part2 = x_rel - game.bg_w if x_rel > 0 else x_rel + game.bg_w    
@@ -714,7 +771,9 @@ while run:
     
     #draw nest if last block for level completion
     if(game.screen_total_blocks) <= (game.screen_block - 1):
-        finish.draw(win)
+        if scroll_stop == False:
+            finish.draw(win)
+            
         if finish.mask.overlap(bird.mask, offset(finish,bird)):
             if bird.freeze == 0:
                 win_sound = pygame.mixer.Sound('sounds/brass-fanfare-with-timpani-and-winchimes-reverberated-146260.mp3')
@@ -762,12 +821,12 @@ while run:
             elif(high_score_set):
                 for highScore in high_scores:
                     highScore.draw(win)
-        
-                
-    if not bird.freeze:
-        if bird.right == 1:
-            if finish.x > (screen_width  - 450):
-                finish.x -= 10
+       
+    if scroll_stop != True:         
+        if not bird.freeze:
+            if bird.right == 1:
+                if finish.x > (screen_width  - 450):
+                    finish.x -= 10
 
     #check if coin collides with player
     for coinObj in game.coins:
@@ -781,9 +840,12 @@ while run:
     for batObj in game.bats:
         batObj.draw(win,dt)  
     
+    scroll_stop = False
     for enemy_obj in game.enemies:
         if enemy_obj.block_active <= game.screen_block:
             enemy_obj.draw(win,dt)
+            if enemy_obj.boss and enemy_obj.dead != 1:
+                scroll_stop = True
             if enemy_obj.dead != 1:
                 if enemy_obj.mask.overlap(bird.mask, offset(enemy_obj,bird)):             
                     #bird.health -= 1
