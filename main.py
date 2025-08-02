@@ -119,6 +119,12 @@ class enemy(object):
         self.boss_dir = 'left'
         self.block_active = block_active
         self.enemy_type = enemy_type
+        self.healthBar = False 
+        self.hide_boss_health_bar = False
+        
+        if self.boss:
+            self.healthBar = healthBar((screen_width/2) - 30,35)  
+            
         if enemy_type == 2:
             self.speed = 10
         elif enemy_type == 3:
@@ -168,11 +174,22 @@ class enemy(object):
         ]
     
     def draw(self,win,dt):
+        if self.boss and self.hide_boss_health_bar == False:
+            self.healthBar.y = self.y - 20
+            self.healthBar.x = self.x
+            self.healthBar.draw(win,dt)
+            
         if self.hit:
             self.hit_count  += 1
             self.speed += .3
-            if (self.hit_count >= 30 and self.boss) or not self.boss:
+            
+            if self.boss:
+                if self.hit_count % 3 == 0:
+                    self.healthBar.hit = 1
+                
+            if (self.hit_count >= 27 and self.boss) or not self.boss:
                 self.draw_die(win,dt)
+                self.hide_boss_health_bar = True
             elif self.attacking:
                 self.draw_attack(win,dt)
             else:
@@ -496,8 +513,7 @@ class game(object):
         self.screen_block = 0
         self.config_file = game_config_file
         self.game_configs  = []
-        #self.healthBar = healthBar(screen_width - 280,35)    
-        
+
     def get_configs(self):
         with open(self.config_file) as f:
            game_configs = json.load(f)
@@ -516,7 +532,6 @@ class game(object):
         self.enemies = []
         self.screen_total_blocks = 0
         self.screen_block = 0
-        #self.healthBar = healthBar(screen_width - 280,35)
         self.set_level()
         
     def set_level(self):
@@ -565,7 +580,7 @@ class game(object):
             #self.enemies.append(enemy(enemy_lines[key]["x"],enemy_lines[key]["y"],enemy_lines[key]["enemy_type"],enemy_lines[key]["block_active"]))
             
         for key in boss_lines.keys():
-            self.enemies.append(enemy(enemy_lines[key]["x"],enemy_lines[key]["y"],enemy_lines[key]["enemy_type"],enemy_lines[key]["block_active"],1))    
+            self.enemies.append(enemy(boss_lines[key]["x"],boss_lines[key]["y"],boss_lines[key]["enemy_type"],boss_lines[key]["block_active"],1))    
  
     def display_level(self,win):
         level = pygame.font.SysFont('Comic Sans MS', 30)
@@ -773,19 +788,18 @@ while run:
     if(game.screen_total_blocks) <= (game.screen_block - 1):
         if scroll_stop == False:
             finish.draw(win)
-            
-        if finish.mask.overlap(bird.mask, offset(finish,bird)):
-            if bird.freeze == 0:
-                win_sound = pygame.mixer.Sound('sounds/brass-fanfare-with-timpani-and-winchimes-reverberated-146260.mp3')
-                win_sound.play()
-                
-            bird.freeze = 1
-            pygame.font.init()
-            my_font = pygame.font.SysFont('Comic Sans MS', 30) 
-            text_surface = my_font.render('YOU WIN', False, (66, 245, 144))
-   
-            center = text_surface.get_rect(center=(screen_width/2, screen_height/2))
-            win.blit(text_surface, center)
+            if finish.mask.overlap(bird.mask, offset(finish,bird)):
+                if bird.freeze == 0:
+                    win_sound = pygame.mixer.Sound('sounds/brass-fanfare-with-timpani-and-winchimes-reverberated-146260.mp3')
+                    win_sound.play()
+                    
+                bird.freeze = 1
+                pygame.font.init()
+                my_font = pygame.font.SysFont('Comic Sans MS', 30) 
+                text_surface = my_font.render('YOU WIN', False, (66, 245, 144))
+       
+                center = text_surface.get_rect(center=(screen_width/2, screen_height/2))
+                win.blit(text_surface, center)
         
     if bird.freeze:
         if bird.x != 1150 and bird.y != 430:
