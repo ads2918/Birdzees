@@ -11,9 +11,14 @@ import pandas as pd
 window = tk.Tk()
 window.withdraw()
 pygame.init()
-screen_width = 1500
+
+screen_width = 1700
 screen_height = 696
 win = pygame.display.set_mode((screen_width,screen_height))
+
+BLACK = (0,0,0)
+black_area_height = 400  # Example: 50 pixels tall
+# black_area_rect = pygame.Rect(0, screen_height,win.get_width(), black_area_height)
 pygame.display.set_caption("Birdzees")
 game_config_file = "game.json"
 clock = pygame.time.Clock()  
@@ -300,7 +305,7 @@ class enemy(object):
             win.blit(image, (self.x - 5,self.y))
         else:
             self.index = 0
-            
+ 
         self.index += 1
                   
 class coin(object):
@@ -576,8 +581,9 @@ class game(object):
         level_config = self.game_configs["levels"][str(self.level)]  
         enemy_lines = level_config["enemies"]
         boss_lines = level_config["boss"]
-        #for key in enemy_lines.keys():
-            #self.enemies.append(enemy(enemy_lines[key]["x"],enemy_lines[key]["y"],enemy_lines[key]["enemy_type"],enemy_lines[key]["block_active"]))
+        
+        for key in enemy_lines.keys():
+            self.enemies.append(enemy(enemy_lines[key]["x"],enemy_lines[key]["y"],enemy_lines[key]["enemy_type"],enemy_lines[key]["block_active"]))
             
         for key in boss_lines.keys():
             self.enemies.append(enemy(boss_lines[key]["x"],boss_lines[key]["y"],boss_lines[key]["enemy_type"],boss_lines[key]["block_active"],1))    
@@ -625,6 +631,7 @@ def main_menu(win,bg_w,bg_h,pause_flag = 0):
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 menu = False
+                return False;
             if event.type == pygame.KEYDOWN: 
                 if event.key == pygame.K_SPACE:
                     menu = False
@@ -639,7 +646,8 @@ def main_menu(win,bg_w,bg_h,pause_flag = 0):
             win.blit(start,((screen_width/2 - 100),(screen_height/2) + 200))
             
         pygame.display.update()
-
+    return True
+    
 def myround(x, base=5):
     return base * round(x/base)
     
@@ -697,23 +705,25 @@ def highscores_scroll():
 
         
 game = game()
-main_menu(win,game.bg_w,game.bg_h)  
-bird = player(0,screen_height - 250)
-finish = nest()
-game.set_level()
-bullets = []
-screen_block = 1
-bg_x = 0 
+start_game = main_menu(win,game.bg_w,game.bg_h)  
 
-last_x_rel = 0
-level_shown = 0
-last_shoot = 0
-user_input = ''
-highscore_scroll = 0
-reset_shoot = 0
-high_score_set = 0
-scroll_stop = False
-while run:
+if start_game:# if menu bypassed
+    bird = player(0,screen_height - 250)
+    game.set_level()
+    finish = nest()
+    bullets = []
+    screen_block = 1
+    bg_x = 0 
+    last_x_rel = 0
+    level_shown = 0
+    last_shoot = 0
+    user_input = ''
+    highscore_scroll = 0
+    reset_shoot = 0
+    high_score_set = 0
+    scroll_stop = False
+    
+while run and start_game:
     dt = clock.tick(15)
     if level_shown:
         for event in pygame.event.get():
@@ -894,6 +904,8 @@ while run:
     else:
         bird.draw(win,dt)
     
+            
+    # pygame.draw.rect(win, BLACK, black_area_rect)   
     #game.healthBar.draw(win,dt)             
     pygame.display.update()
     last_x_rel = x_rel
